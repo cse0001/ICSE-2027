@@ -894,7 +894,7 @@ class RoCBertForPreTraining(RoCBertPreTrainedModel):
         >>> tokenizer = AutoTokenizer.from_pretrained("weiweishi/roc-bert-base-zh")
         >>> model = RoCBertForPreTraining.from_pretrained("weiweishi/roc-bert-base-zh")
 
-        >>> inputs = tokenizer("你好，很高兴认识你", return_tensors="pt")
+        >>> inputs = tokenizer("hello, nice to meet you", return_tensors="pt")
         >>> attack_inputs = {}
         >>> for key in list(inputs.keys()):
         ...     attack_inputs[f"attack_{key}"] = inputs[key]
@@ -1056,7 +1056,7 @@ class RoCBertForMaskedLM(RoCBertPreTrainedModel):
         >>> tokenizer = AutoTokenizer.from_pretrained("weiweishi/roc-bert-base-zh")
         >>> model = RoCBertForMaskedLM.from_pretrained("weiweishi/roc-bert-base-zh")
 
-        >>> inputs = tokenizer("法国是首都[MASK].", return_tensors="pt")
+        >>> inputs = tokenizer("Paris is the capital of [MASK].", return_tensors="pt")
 
         >>> with torch.no_grad():
         ...     logits = model(**inputs).logits
@@ -1182,7 +1182,7 @@ class RoCBertForCausalLM(RoCBertPreTrainedModel, GenerationMixin):
         >>> config.is_decoder = True
         >>> model = RoCBertForCausalLM.from_pretrained("weiweishi/roc-bert-base-zh", config=config)
 
-        >>> inputs = tokenizer("你好，很高兴认识你", return_tensors="pt")
+        >>> inputs = tokenizer("hello, nice to meet you", return_tensors="pt")
         >>> outputs = model(**inputs)
 
         >>> prediction_logits = outputs.logits

@@ -39,8 +39,8 @@ class RoFormerTokenizer(PreTrainedTokenizerFast):
     >>> from transformers import RoFormerTokenizer
 
     >>> tokenizer = RoFormerTokenizer.from_pretrained("junnyu/roformer_chinese_base")
-    >>> tokenizer.tokenize("今天天气非常好。")
-    ['今', '天', '天', '气', '非常', '好', '。']
+    >>> tokenizer.tokenize("the weather is nice today.")
+    ['the', 'weather', 'is', 'nice', 'today', '.']
     ```
     """
 

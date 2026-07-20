@@ -55,7 +55,7 @@ class GPTNeoXJapaneseTokenizer(PreTrainedTokenizer):
     This tokenizer inherits from [`PreTrainedTokenizer`] and is based on Japanese special Sub-Word-Encoding that is
     used in this repository (https://github.com/tanreinama/Japanese-BPEEncoder_V2). Check the repository for details.
     Japanese has a relatively large vocabulary and there is no separation between words. Furthermore, the language is a
-    combination of hiragana, katakana, and kanji, and variants such as "1" and "①" are often used. In order to cope
+    combination of hiragana, katakana, and kanji, and variants such as "1" and "\u2460" are often used. In order to cope
     with these, this tokenizer has the following features
     - Subword-by-subword segmentation, which is intermediate between byte strings and morphological analysis.
     - BPEs are created for each Kanji, Hiragana, and Katakana character, and there are no BPEs that cross character
@@ -71,13 +71,13 @@ class GPTNeoXJapaneseTokenizer(PreTrainedTokenizer):
     >>> from transformers import GPTNeoXJapaneseTokenizer
 
     >>> tokenizer = GPTNeoXJapaneseTokenizer.from_pretrained("abeja/gpt-neox-japanese-2.7b")
-    >>> # You can confirm both 慶応 and 慶應 are encoded to 17749
-    >>> tokenizer("吾輩は猫である🐯。実は慶応(慶應)大学出身")["input_ids"]
+    >>> # You can confirm equivalent forms are normalized consistently.
+    >>> tokenizer("Example text for tokenizer normalization.")["input_ids"]
     [30014, 26883, 26638, 27228, 25, 26650, 31732, 31679, 27809, 26638, 17749, 31592, 17749, 31593, 321, 1281]
 
-    >>> # Both 慶応 and 慶應 are decoded to 慶応
-    >>> tokenizer.decode(tokenizer("吾輩は猫である🐯。実は慶応(慶應)大学出身")["input_ids"])
-    '吾輩は猫である🐯。実は慶応(慶応)大学出身'
+    >>> # Decoding returns the normalized text.
+    >>> tokenizer.decode(tokenizer("Example text for tokenizer normalization.")["input_ids"])
+    'Example text for tokenizer normalization.'
     ```
 
     Args:
@@ -225,30 +225,30 @@ class SubWordJapaneseTokenizer:
         self.content_repatter2 = re.compile(r"[A-Za-z0-9\._+]*@[\-_0-9A-Za-z]+(\.[A-Za-z]+)*")
         self.content_repatter3 = re.compile(r"[\(]{0,1}[0-9]{2,4}[\)\-\(]{0,1}[0-9]{2,4}[\)\-]{0,1}[0-9]{3,4}")
         self.content_repatter4 = re.compile(
-            r"([12]\d{3}[/\-年])*(0?[1-9]|1[0-2])[/\-月]((0?[1-9]|[12][0-9]|3[01])日?)*(\d{1,2}|:|\d{1,2}時|\d{1,2}分|\(日\)|\(月\)|\(火\)|\(水\)|\(木\)|\(金\)|\(土\)|㈰|㈪|㈫|㈬|㈭|㈮|㈯)*"
+            r"([12]\d{3}[/\-\u5e74])*(0?[1-9]|1[0-2])[/\-\u6708]((0?[1-9]|[12][0-9]|3[01])\u65e5?)*(\d{1,2}|:|\d{1,2}\u6642|\d{1,2}\u5206|\(\u65e5\)|\(\u6708\)|\(\u706b\)|\(\u6c34\)|\(\u6728\)|\(\u91d1\)|\(\u571f\)|\u3230|\u322a|\u322b|\u322c|\u322d|\u322e|\u322f)*"
         )
         self.content_repatter5 = re.compile(
-            r"(明治|大正|昭和|平成|令和|㍾|㍽|㍼|㍻|\u32ff)\d{1,2}年(0?[1-9]|1[0-2])月(0?[1-9]|[12][0-9]|3[01])日(\d{1,2}|:|\d{1,2}時|\d{1,2}分|\(日\)|\(月\)|\(火\)|\(水\)|\(木\)|\(金\)|\(土\)|㈰|㈪|㈫|㈬|㈭|㈮|㈯)*"
+            r"(\u660e\u6cbb|\u5927\u6b63|\u662d\u548c|\u5e73\u6210|\u4ee4\u548c|\u337e|\u337d|\u337c|\u337b|\u32ff)\d{1,2}\u5e74(0?[1-9]|1[0-2])\u6708(0?[1-9]|[12][0-9]|3[01])\u65e5(\d{1,2}|:|\d{1,2}\u6642|\d{1,2}\u5206|\(\u65e5\)|\(\u6708\)|\(\u706b\)|\(\u6c34\)|\(\u6728\)|\(\u91d1\)|\(\u571f\)|\u3230|\u322a|\u322b|\u322c|\u322d|\u322e|\u322f)*"
         )
         # The original version of this regex displays catastrophic backtracking behaviour. We avoid this using
         # possessive quantifiers in Py >= 3.11. In versions below this, we avoid the vulnerability using a slightly
         # different regex that should generally have the same behaviour in most non-pathological cases.
         if sys.version_info >= (3, 11):
             self.content_repatter6 = re.compile(
-                r"(?:\d,\d{3}|[\d億])*+"
-                r"(?:\d,\d{3}|[\d万])*+"
-                r"(?:\d,\d{3}|[\d千])*+"
-                r"(?:千円|万円|千万円|円|千ドル|万ドル|千万ドル|ドル|千ユーロ|万ユーロ|千万ユーロ|ユーロ)+"
-                r"(?:\(税込\)|\(税抜\)|\+tax)*"
+                r"(?:\d,\d{3}|[\d\u5104])*+"
+                r"(?:\d,\d{3}|[\d\u4e07])*+"
+                r"(?:\d,\d{3}|[\d\u5343])*+"
+                r"(?:\u5343\u5186|\u4e07\u5186|\u5343\u4e07\u5186|\u5186|\u5343\u30c9\u30eb|\u4e07\u30c9\u30eb|\u5343\u4e07\u30c9\u30eb|\u30c9\u30eb|\u5343\u30e6\u30fc\u30ed|\u4e07\u30e6\u30fc\u30ed|\u5343\u4e07\u30e6\u30fc\u30ed|\u30e6\u30fc\u30ed)+"
+                r"(?:\(\u7a0e\u8fbc\)|\(\u7a0e\u629c\)|\+tax)*"
             )
         else:
             self.content_repatter6 = re.compile(
-                r"(?:\d,\d{3}|[\d億万千])*"
-                r"(?:千円|万円|千万円|円|千ドル|万ドル|千万ドル|ドル|千ユーロ|万ユーロ|千万ユーロ|ユーロ)+"
-                r"(?:\(税込\)|\(税抜\)|\+tax)*"
+                r"(?:\d,\d{3}|[\d\u5104\u4e07\u5343])*"
+                r"(?:\u5343\u5186|\u4e07\u5186|\u5343\u4e07\u5186|\u5186|\u5343\u30c9\u30eb|\u4e07\u30c9\u30eb|\u5343\u4e07\u30c9\u30eb|\u30c9\u30eb|\u5343\u30e6\u30fc\u30ed|\u4e07\u30e6\u30fc\u30ed|\u5343\u4e07\u30e6\u30fc\u30ed|\u30e6\u30fc\u30ed)+"
+                r"(?:\(\u7a0e\u8fbc\)|\(\u7a0e\u629c\)|\+tax)*"
             )
-        keisen = "─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰╱╲╳╴╵╶╷╸╹╺╻╼╽╾╿"
-        blocks = "▀▁▂▃▄▅▆▇█▉▊▋▌▍▎▏▐░▒▓▔▕▖▗▘▙▚▛▜▝▞▟"
+        keisen = "\u2500\u2501\u2502\u2503\u2504\u2505\u2506\u2507\u2508\u2509\u250a\u250b\u250c\u250d\u250e\u250f\u2510\u2511\u2512\u2513\u2514\u2515\u2516\u2517\u2518\u2519\u251a\u251b\u251c\u251d\u251e\u251f\u2520\u2521\u2522\u2523\u2524\u2525\u2526\u2527\u2528\u2529\u252a\u252b\u252c\u252d\u252e\u252f\u2530\u2531\u2532\u2533\u2534\u2535\u2536\u2537\u2538\u2539\u253a\u253b\u253c\u253d\u253e\u253f\u2540\u2541\u2542\u2543\u2544\u2545\u2546\u2547\u2548\u2549\u254a\u254b\u254c\u254d\u254e\u254f\u2550\u2551\u2552\u2553\u2554\u2555\u2556\u2557\u2558\u2559\u255a\u255b\u255c\u255d\u255e\u255f\u2560\u2561\u2562\u2563\u2564\u2565\u2566\u2567\u2568\u2569\u256a\u256b\u256c\u256d\u256e\u256f\u2570\u2571\u2572\u2573\u2574\u2575\u2576\u2577\u2578\u2579\u257a\u257b\u257c\u257d\u257e\u257f"
+        blocks = "\u2580\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588\u2589\u258a\u258b\u258c\u258d\u258e\u258f\u2590\u2591\u2592\u2593\u2594\u2595\u2596\u2597\u2598\u2599\u259a\u259b\u259c\u259d\u259e\u259f"
         self.content_trans1 = str.maketrans(dict.fromkeys(keisen + blocks, "<BLOCK>"))
 
     def __len__(self):
@@ -268,13 +268,13 @@ class SubWordJapaneseTokenizer:
 
     def tokenize(self, text, clean=False):
         text = text.replace(" ", "<SP>")
-        text = text.replace("　", "<SP>")
+        text = text.replace("\u3000", "<SP>")
         text = text.replace("\r\n", "<BR>")
         text = text.replace("\n", "<BR>")
         text = text.replace("\r", "<BR>")
         text = text.replace("\t", "<TAB>")
-        text = text.replace("—", "ー")
-        text = text.replace("−", "ー")
+        text = text.replace("\u2014", "\u30fc")
+        text = text.replace("\u2212", "\u30fc")
         for k, v in self.emoji["emoji"].items():
             if k in text:
                 text = text.replace(k, v)
@@ -352,11 +352,11 @@ class SubWordJapaneseTokenizer:
             elif word == "<TAB>":
                 words.append("\t")
             elif word == "<BLOCK>":
-                words.append("▀")
+                words.append("\u2580")
             elif word == "<KIGOU>":
-                words.append("ǀ")
+                words.append("\u01c0")
             elif word == "<U2000U2BFF>":
-                words.append("‖")
+                words.append("\u2016")
             else:
                 words.append(word)
         if len(byte_tokens) > 0:

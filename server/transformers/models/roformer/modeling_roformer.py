@@ -908,7 +908,7 @@ class RoFormerForCausalLM(RoFormerPreTrainedModel, GenerationMixin):
         >>> config.is_decoder = True
         >>> model = RoFormerForCausalLM.from_pretrained("junnyu/roformer_chinese_base", config=config)
 
-        >>> inputs = tokenizer("今天天气非常好。", return_tensors="pt")
+        >>> inputs = tokenizer("the weather is nice today.", return_tensors="pt")
         >>> outputs = model(**inputs)
 
         >>> prediction_logits = outputs.logits

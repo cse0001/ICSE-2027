@@ -935,7 +935,7 @@ class ChineseCLIPModel(ChineseCLIPPreTrainedModel):
         >>> model = ChineseCLIPModel.from_pretrained("OFA-Sys/chinese-clip-vit-base-patch16")
         >>> tokenizer = AutoTokenizer.from_pretrained("OFA-Sys/chinese-clip-vit-base-patch16")
 
-        >>> inputs = tokenizer(["杰尼龟", "妙蛙种子", "小火龙", "皮卡丘"], padding=True, return_tensors="pt")
+        >>> inputs = tokenizer(["squirtle", "bulbasaur", "charmander", "pikachu"], padding=True, return_tensors="pt")
         >>> with torch.inference_mode():
         ...     text_features = model.get_text_features(**inputs)
         >>> text_features = text_features / text_features.norm(p=2, dim=-1, keepdim=True)
@@ -1020,7 +1020,7 @@ class ChineseCLIPModel(ChineseCLIPPreTrainedModel):
         >>> url = "https://clip-cn-beijing.oss-cn-beijing.aliyuncs.com/pokemon.jpeg"
         >>> image = load_image(url)
 
-        >>> inputs = processor(text=["杰尼龟", "妙蛙种子", "小火龙", "皮卡丘"], images=image, return_tensors="pt", padding=True)
+        >>> inputs = processor(text=["squirtle", "bulbasaur", "charmander", "pikachu"], images=image, return_tensors="pt", padding=True)
 
         >>> with torch.inference_mode():
         ...     outputs = model(**inputs)

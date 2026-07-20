@@ -426,7 +426,7 @@ class GPTNeoXJapaneseModel(GPTNeoXJapanesePreTrainedModel):
         >>> tokenizer = AutoTokenizer.from_pretrained("abeja/gpt-neox-japanese-2.7b")
         >>> model = GPTNeoXJapaneseModel.from_pretrained("abeja/gpt-neox-japanese-2.7b")
 
-        >>> inputs = tokenizer("日本語のGPT-neoxがHugging Faceで使えます😀", return_tensors="pt")
+        >>> inputs = tokenizer("GPT-NeoX can be used with Hugging Face.", return_tensors="pt")
         >>> outputs = model(**inputs)
 
         >>> last_hidden_states = outputs.last_hidden_state
@@ -558,7 +558,7 @@ class GPTNeoXJapaneseForCausalLM(GPTNeoXJapanesePreTrainedModel, GenerationMixin
         >>> config.is_decoder = True
         >>> model = GPTNeoXJapaneseForCausalLM.from_pretrained("abeja/gpt-neox-japanese-2.7b", config=config)
 
-        >>> inputs = tokenizer("日本語のGPT-neoxがHugging Faceで使えます😀", return_tensors="pt")
+        >>> inputs = tokenizer("GPT-NeoX can be used with Hugging Face.", return_tensors="pt")
         >>> outputs = model(**inputs)
 
         >>> prediction_logits = outputs.logits

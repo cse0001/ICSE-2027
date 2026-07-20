@@ -1,0 +1,11 @@
+{
+    "deepseek-r1": {
+        "c": {
+            "bleu": 9.377759280020033,
+            "total_count": 227,
+            "vulnerable_percentage": 34.801762114537446,
+            "vulnerable_suggestion_count": 79,
+            "pass_rate": 65.19823788546256
+        }
+    }
+}

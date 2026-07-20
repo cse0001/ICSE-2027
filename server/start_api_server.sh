@@ -9,7 +9,7 @@ if [ -f .env ]; then
 fi
 
 # Set default values.
-export MODEL_PATH=${MODEL_PATH:-"../../autodl-fs/DeepSeek-7B"} # Qwen3.5-27B
+export MODEL_PATH=${MODEL_PATH:-"../model/Qwen3.5-27B"} # Qwen3.5-27B
 export DEVICE_ID=${DEVICE_ID:-"0"} 
 export TORCH_DTYPE=${TORCH_DTYPE:-"float16"}
 export API_HOST=${API_HOST:-"0.0.0.0"}

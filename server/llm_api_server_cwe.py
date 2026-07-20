@@ -132,7 +132,7 @@ def init_model():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     session_log_dir = f"{log_dir}/session_{timestamp}"
     
-    model_instance = LRModel(model_path, device, torch_dtype, log_dir=session_log_dir, max_injections_per_rule=1)
+    model_instance = LRModel(model_path, device, torch_dtype, log_dir=session_log_dir, max_injections_per_rule=3)
     
     model_config = {
         "model_path": model_path,

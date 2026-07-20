@@ -44,3 +44,11 @@ Thumbs.db
 # TraceGuard server artifacts
 server/**/__pycache__/
 server/cwe_logs/
+secbenchmark/PurpleLlama/llm_cache.json
+effectiveness/result/
+model/
+functionality/result/
+bigcode-evaluation-harness/mbpp_results/
+bigcode-evaluation-harness/origin/
+bigcode-evaluation-harness/traceguard/
+bigcode-evaluation-harness/rci/

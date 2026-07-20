@@ -727,14 +727,14 @@ class CpmAntForCausalLM(CpmAntPreTrainedModel, GenerationMixin):
         ```python
         >>> from transformers import CPMAntTokenizer, CpmAntForCausalLM
 
-        >>> texts = "今天天气不错，"
+        >>> texts = "The weather is nice today,"
         >>> model = CpmAntForCausalLM.from_pretrained("openbmb/cpm-ant-10b")
         >>> tokenizer = CPMAntTokenizer.from_pretrained("openbmb/cpm-ant-10b")
         >>> input_ids = tokenizer(texts, return_tensors="pt")
         >>> outputs = model.generate(**input_ids)
         >>> output_texts = tokenizer.batch_decode(outputs)
         >>> print(output_texts)
-        ['今天天气不错，阳光明媚，我和妈妈一起去超市买东西。\n在超市里，我看到了一个很好玩的玩具，它的名字叫“机器人”。它有一个圆圆的脑袋，两只圆圆的眼睛，还有一个圆圆的']
+        ['The weather is nice today, and the sun is bright.']
         ```
         """
         return_dict = return_dict if return_dict is not None else self.config.return_dict

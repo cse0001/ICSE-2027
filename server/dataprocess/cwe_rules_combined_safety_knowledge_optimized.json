@@ -1,0 +1,380 @@
+[
+  {
+    "rule_id": "DG-RULE-0001",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "simple_string",
+    "rule": "simple:strcat",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcat(). It copies with no bounds check, causing buffer overflow.\nREPLACEMENT: Use snprintf() to append, or strncat() with exact remaining-capacity math, or strlen+memcpy with a prior bounds check.\nEXAMPLE (C):\n/* safe_append: append src to dst without overflow. buf_cap = total size of dst buffer. */\nsize_t dlen = strlen(dst);\nsize_t slen = strlen(src);\nif (dlen >= buf_cap || slen > buf_cap - dlen - 1) {\n    return -1; /* would overflow */\n}\nmemcpy(dst + dlen, src, slen + 1);\n/* Or one-liner: snprintf(dst + dlen, buf_cap - dlen, \"%s\", src); */\nVERIFICATION: Your final code MUST NOT contain any call to strcat(). The output will be scanned and rejected if strcat() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcat(). It copies with no bounds check, causing buffer overflow.\nREPLACEMENT: Use snprintf() to append, or strlen+memcpy with a prior bounds check. Pass the buffer capacity explicitly (do not rely on sizeof if the buffer is received as a pointer).\nEXAMPLE:\nsize_t dlen = strlen(dst);\nsize_t slen = strlen(src);\nif (dlen >= buf_cap || slen > buf_cap - dlen - 1) return -1;\nmemcpy(dst + dlen, src, slen + 1);\nVERIFICATION: Final code MUST NOT contain strcat()."
+  },
+  {
+    "rule_id": "DG-RULE-0002",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "simple_string",
+    "rule": "simple:strcpy",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcpy(). It copies with no bounds check, causing buffer overflow.\nREPLACEMENT: Use snprintf(dst, buf_cap, \"%s\", src) which auto-truncates, or validate length then memcpy.\nEXAMPLE (C):\nsize_t slen = strlen(src);\nif (slen >= buf_cap) {\n    return -1; /* src too large */\n}\nmemcpy(dst, src, slen + 1);\n/* Or one-liner: snprintf(dst, buf_cap, \"%s\", src); */\nVERIFICATION: Your final code MUST NOT contain any call to strcpy(). The output will be scanned and rejected if strcpy() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcpy(). No bounds check.\nREPLACEMENT: snprintf(dst, buf_cap, \"%s\", src) or strlen+memcpy with length validation.\nEXAMPLE:\nsize_t slen = strlen(src);\nif (slen >= buf_cap) return -1;\nmemcpy(dst, src, slen + 1);\nVERIFICATION: Final code MUST NOT contain strcpy()."
+  },
+  {
+    "rule_id": "DG-RULE-0003",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "simple_string",
+    "rule": "simple:sprintf",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: sprintf(). It has no buffer size limit, causing buffer overflow.\nREPLACEMENT: Use snprintf(buf, buf_cap, fmt, ...) and check its return value.\nEXAMPLE (C):\nchar buf[256];\nint n = snprintf(buf, sizeof(buf), \"%s=%d\", name, value);\nif (n < 0 || (size_t)n >= sizeof(buf)) {\n    return -1; /* encoding error or truncation */\n}\nVERIFICATION: Your final code MUST NOT contain any call to sprintf(). Use snprintf() everywhere. The output will be scanned and rejected if sprintf() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: sprintf(). No buffer size limit.\nREPLACEMENT: snprintf(buf, buf_cap, fmt, ...) with return-value check.\nEXAMPLE:\nint n = snprintf(buf, sizeof(buf), \"%s=%d\", name, value);\nif (n < 0 || (size_t)n >= sizeof(buf)) return -1;\nVERIFICATION: Final code MUST NOT contain sprintf()."
+  },
+  {
+    "rule_id": "DG-RULE-0004",
+    "cwe_identifier": "CWE-119",
+    "rule_type": "simple_string",
+    "rule": "simple:scanf",
+    "safety_knowledge": "CWE-119 ALERT. FORBIDDEN: scanf() with unbounded %s. Writing beyond buffer bounds.\nREPLACEMENT: Use fgets(buf, sizeof(buf), stdin) for line input. If scanf is needed, ALWAYS add a width limit: \"%255s\" for a char[256] buffer.\nEXAMPLE (C):\nchar buf[256];\n/* Preferred: fgets */\nif (fgets(buf, sizeof(buf), stdin) == NULL) return -1;\nbuf[strcspn(buf, \"\\n\")] = '\\0';\n/* Alternative: scanf with width (width = sizeof(buf) - 1) */\nif (scanf(\"%255s\", buf) != 1) return -1;\nVERIFICATION: Your final code MUST NOT use scanf with bare %s (no width). Always use fgets() or scanf(\"%<width>s\", ...) with explicit width.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-119 ALERT. FORBIDDEN: scanf with bare %s.\nREPLACEMENT: fgets(buf, sizeof(buf), stdin), or scanf(\"%255s\", buf) with width = bufsize-1.\nVERIFICATION: Final code MUST NOT contain scanf(\"%s\",...)."
+  },
+  {
+    "rule_id": "DG-RULE-0005",
+    "cwe_identifier": "CWE-242",
+    "rule_type": "simple_string",
+    "rule": "simple:gets",
+    "safety_knowledge": "CWE-242 ALERT. FORBIDDEN: gets(). Removed from C11 standard. Impossible to use safely — no buffer size parameter.\nREPLACEMENT: Use fgets(buf, sizeof(buf), stdin). Always.\nEXAMPLE (C):\nchar buf[256];\nif (fgets(buf, sizeof(buf), stdin) == NULL) return -1;\nbuf[strcspn(buf, \"\\n\")] = '\\0';\nVERIFICATION: Your final code MUST NOT contain any call to gets(). The output will be scanned and rejected if gets() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-242 ALERT. FORBIDDEN: gets(). Removed from C11. No buffer size parameter.\nREPLACEMENT: fgets(buf, sizeof(buf), stdin).\nVERIFICATION: Final code MUST NOT contain gets()."
+  },
+  {
+    "rule_id": "DG-RULE-0006",
+    "cwe_identifier": "CWE-338",
+    "rule_type": "simple_string",
+    "rule": "simple:rand()",
+    "safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() and srand(). Predictable PRNG, not suitable for any use in generated code.\nREPLACEMENT (pick one based on context):\n- C on Linux: #include <sys/random.h> then getrandom(&val, sizeof(val), 0)\n- C on BSD/macOS: arc4random() or arc4random_uniform(bound)\n- C on Windows: #include <bcrypt.h> then BCryptGenRandom(NULL,(PUCHAR)&v,sizeof(v),BCRYPT_USE_SYSTEM_PREFERRED_RNG)\n- C++ (portable): #include <random> then std::random_device rd; unsigned val = rd();\n- OpenSSL: #include <openssl/rand.h> then RAND_bytes(buf, len)\nEXAMPLE (C++, most portable):\n#include <random>\nstd::random_device rd;\nunsigned int val = rd();\n/* For range [0, bound): */\nstd::uniform_int_distribution<unsigned> dist(0, bound - 1);\nunsigned int bounded_val = dist(rd);\nVERIFICATION: Your final code MUST NOT contain rand() or srand(). The output will be scanned and rejected if either appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() and srand().\nREPLACEMENT: getrandom (Linux), arc4random (BSD), BCryptGenRandom (Win), std::random_device (C++), RAND_bytes (OpenSSL).\nVERIFICATION: Final code MUST NOT contain rand() or srand()."
+  },
+  {
+    "rule_id": "DG-RULE-0007",
+    "cwe_identifier": "CWE-78",
+    "rule_type": "simple_string",
+    "rule": "simple:system(",
+    "safety_knowledge": "CWE-78 ALERT. FORBIDDEN: system(). It passes a string to a shell, enabling command injection.\nREPLACEMENT: Use process-spawning APIs with argument vectors (no shell).\n- POSIX: posix_spawn() or fork+execvp()\n- Windows: CreateProcessW()\nEXAMPLE (POSIX):\n#include <spawn.h>\n#include <sys/wait.h>\nextern char **environ;\nchar *const argv[] = {\"/usr/bin/tool\", \"--flag\", filepath, NULL};\npid_t pid;\nint status;\nif (posix_spawn(&pid, argv[0], NULL, NULL, argv, environ) != 0) return -1;\nwaitpid(pid, &status, 0);\nreturn WIFEXITED(status) ? WEXITSTATUS(status) : -1;\nIMPORTANT: Never concatenate user input into a command string. Pass it only as a separate argument.\nVERIFICATION: Your final code MUST NOT contain any call to system(). The output will be scanned and rejected if system() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-78 ALERT. FORBIDDEN: system().\nREPLACEMENT: posix_spawn (POSIX) or CreateProcessW (Windows) with argv.\nVERIFICATION: Final code MUST NOT contain system()."
+  },
+  {
+    "rule_id": "DG-RULE-0008",
+    "cwe_identifier": "CWE-119",
+    "rule_type": "regex",
+    "rule": "\\bscanf\\s*\\(\\s*\"[^\"]*%s[^\"]*\"[^)]*\\)",
+    "safety_knowledge": "CWE-119 ALERT. FORBIDDEN: scanf() with unbounded %s. Writing beyond buffer bounds.\nREPLACEMENT: Use fgets(buf, sizeof(buf), stdin) for line input. If scanf is needed, ALWAYS add a width limit: \"%255s\" for a char[256] buffer.\nEXAMPLE (C):\nchar buf[256];\n/* Preferred: fgets */\nif (fgets(buf, sizeof(buf), stdin) == NULL) return -1;\nbuf[strcspn(buf, \"\\n\")] = '\\0';\n/* Alternative: scanf with width (width = sizeof(buf) - 1) */\nif (scanf(\"%255s\", buf) != 1) return -1;\nVERIFICATION: Your final code MUST NOT use scanf with bare %s (no width). Always use fgets() or scanf(\"%<width>s\", ...) with explicit width.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-119 ALERT. FORBIDDEN: scanf with bare %s.\nREPLACEMENT: fgets(buf, sizeof(buf), stdin), or scanf(\"%255s\", buf) with width = bufsize-1.\nVERIFICATION: Final code MUST NOT contain scanf(\"%s\",...)."
+  },
+  {
+    "rule_id": "DG-RULE-0009",
+    "cwe_identifier": "CWE-119",
+    "rule_type": "structural_dsl",
+    "rule": "{ $ret = $snprintf_family($b); not: $ret < _;  _($b + $ret);}",
+    "safety_knowledge": "CWE-119 ALERT. FORBIDDEN: Using snprintf() return value as pointer offset without validation. snprintf returns negative on error or >= buf_cap on truncation — both lead to out-of-bounds access.\nREPLACEMENT: Always check (n >= 0) AND ((size_t)n < cap) before using n as an offset.\nEXAMPLE (C):\nchar buf[1024];\nsize_t cap = sizeof(buf);\nint n = snprintf(buf, cap, \"%s\", value);\nif (n < 0 || (size_t)n >= cap) return -1;\n/* NOW safe to advance: */\nchar *next = buf + n;\nsize_t remaining = cap - (size_t)n;\nint n2 = snprintf(next, remaining, \"-%s\", value2);\nif (n2 < 0 || (size_t)n2 >= remaining) return -1;\nVERIFICATION: Every use of snprintf return value for pointer arithmetic MUST be preceded by both checks.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-119 ALERT. After snprintf(), MUST check (n >= 0 && (size_t)n < cap) before using n as offset or index. snprintf can return negative or >= cap."
+  },
+  {
+    "rule_id": "DG-RULE-0010",
+    "cwe_identifier": "CWE-119",
+    "rule_type": "structural_dsl",
+    "rule": "{ $ret = $snprintf_family($b); not: $ret < _; $b[$ret] = _;}",
+    "safety_knowledge": "CWE-119 ALERT. FORBIDDEN: Using snprintf() return value as array index without validation. snprintf returns negative on error or >= buf_cap on truncation — both lead to out-of-bounds write.\nREPLACEMENT: Always check (n >= 0) AND ((size_t)n < cap) before indexing buf[n].\nEXAMPLE (C):\nchar buf[1024];\nsize_t cap = sizeof(buf);\nint n = snprintf(buf, cap, \"%s\", value);\nif (n < 0 || (size_t)n >= cap) return -1;\n/* NOW safe to index: */\nbuf[(size_t)n] = '\\0';\nVERIFICATION: Every use of snprintf return value as array index MUST be preceded by both checks.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-119 ALERT. After snprintf(), MUST check (n >= 0 && (size_t)n < cap) before using n as buffer index."
+  },
+  {
+    "rule_id": "DG-RULE-0011",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "regex",
+    "rule": "\\bstrcat\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcat(). It copies with no bounds check, causing buffer overflow.\nREPLACEMENT: Use snprintf() to append, or strncat() with exact remaining-capacity math, or strlen+memcpy with a prior bounds check.\nEXAMPLE (C):\n/* safe_append: append src to dst without overflow. buf_cap = total size of dst buffer. */\nsize_t dlen = strlen(dst);\nsize_t slen = strlen(src);\nif (dlen >= buf_cap || slen > buf_cap - dlen - 1) {\n    return -1; /* would overflow */\n}\nmemcpy(dst + dlen, src, slen + 1);\n/* Or one-liner: snprintf(dst + dlen, buf_cap - dlen, \"%s\", src); */\nVERIFICATION: Your final code MUST NOT contain any call to strcat(). The output will be scanned and rejected if strcat() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcat(). No bounds check.\nREPLACEMENT: strlen+memcpy with bounds check, or snprintf.\nEXAMPLE:\nsize_t dlen = strlen(dst);\nsize_t slen = strlen(src);\nif (dlen >= buf_cap || slen > buf_cap - dlen - 1) return -1;\nmemcpy(dst + dlen, src, slen + 1);\nVERIFICATION: Final code MUST NOT contain strcat()."
+  },
+  {
+    "rule_id": "DG-RULE-0012",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "regex",
+    "rule": "\\bstrcpy\\s*\\(",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcpy(). It copies with no bounds check, causing buffer overflow.\nREPLACEMENT: Use snprintf(dst, buf_cap, \"%s\", src) which auto-truncates, or validate length then memcpy.\nEXAMPLE (C):\nsize_t slen = strlen(src);\nif (slen >= buf_cap) {\n    return -1; /* src too large */\n}\nmemcpy(dst, src, slen + 1);\n/* Or one-liner: snprintf(dst, buf_cap, \"%s\", src); */\nVERIFICATION: Your final code MUST NOT contain any call to strcpy(). The output will be scanned and rejected if strcpy() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: strcpy(). No bounds check.\nREPLACEMENT: snprintf(dst, buf_cap, \"%s\", src) or strlen+memcpy with length validation.\nVERIFICATION: Final code MUST NOT contain strcpy()."
+  },
+  {
+    "rule_id": "DG-RULE-0013",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "structural_dsl",
+    "rule": "{ sprintf(_);}",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: sprintf(). It has no buffer size limit, causing buffer overflow.\nREPLACEMENT: Use snprintf(buf, buf_cap, fmt, ...) and check its return value.\nEXAMPLE (C):\nchar buf[256];\nint n = snprintf(buf, sizeof(buf), \"%s=%d\", name, value);\nif (n < 0 || (size_t)n >= sizeof(buf)) {\n    return -1; /* encoding error or truncation */\n}\nVERIFICATION: Your final code MUST NOT contain any call to sprintf(). Use snprintf() everywhere. The output will be scanned and rejected if sprintf() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: sprintf(). No buffer size limit.\nREPLACEMENT: snprintf(buf, buf_cap, fmt, ...) with return-value check.\nVERIFICATION: Final code MUST NOT contain sprintf()."
+  },
+  {
+    "rule_id": "DG-RULE-0014",
+    "cwe_identifier": "CWE-121",
+    "rule_type": "structural_dsl",
+    "rule": "{ _ $buf[_]; not: $len < _; $func($buf, _, $len); }",
+    "safety_knowledge": "CWE-121 ALERT. FORBIDDEN: Writing to a stack buffer without bounds check. Stack buffer overflow.\nREPLACEMENT: ALWAYS compare write length against sizeof(buf) BEFORE any write.\nEXAMPLE (C):\nchar buf[256];\nsize_t data_len = get_data_length();\nif (data_len >= sizeof(buf)) {\n    return -1; /* too large for stack buffer */\n}\nmemcpy(buf, src, data_len);\nbuf[data_len] = '\\0';\nVERIFICATION: Every write to a stack-allocated buffer MUST have a preceding length check against the buffer size.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-121 ALERT. MUST check write-length < sizeof(buf) before any write to a stack buffer."
+  },
+  {
+    "rule_id": "DG-RULE-0015",
+    "cwe_identifier": "CWE-121",
+    "rule_type": "structural_dsl",
+    "rule": "{ _ $buf[_]; not: strlen($src) < _; strcpy($buf, $src); }",
+    "safety_knowledge": "CWE-121 ALERT. FORBIDDEN: strcpy() into a stack buffer without length check. Stack buffer overflow.\nREPLACEMENT: Check strlen(src) < sizeof(buf) before copy, or use snprintf.\nEXAMPLE (C):\nchar buf[256];\nsize_t slen = strlen(src);\nif (slen >= sizeof(buf)) return -1;\nmemcpy(buf, src, slen + 1);\n/* Or: snprintf(buf, sizeof(buf), \"%s\", src); */\nVERIFICATION: MUST check source length before copying into stack buffer. MUST NOT use strcpy().",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-121 ALERT. FORBIDDEN: strcpy into stack buffer without length check.\nREPLACEMENT: strlen check + memcpy, or snprintf.\nVERIFICATION: Final code MUST NOT contain strcpy()."
+  },
+  {
+    "rule_id": "DG-RULE-0016",
+    "cwe_identifier": "CWE-1240",
+    "rule_type": "regex",
+    "rule": "(EVP_bf_\\w+\\s*\\()|(BF_\\w+crypt\\s*\\()",
+    "safety_knowledge": "CWE-1240 ALERT. FORBIDDEN: Blowfish (BF_*, EVP_bf_*). Obsolete 64-bit block cipher, vulnerable to Sweet32 attack.\nREPLACEMENT: AES-256-GCM via OpenSSL EVP interface. Provides authenticated encryption.\nEXAMPLE (OpenSSL AES-256-GCM encrypt):\n#include <openssl/evp.h>\n#include <openssl/rand.h>\nint encrypt_aes_gcm(const unsigned char *pt, int pt_len,\n    const unsigned char *key, unsigned char *iv,\n    unsigned char *ct, unsigned char *tag) {\n    int len, ct_len;\n    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();\n    if (!ctx) return -1;\n    if (RAND_bytes(iv, 12) != 1) goto fail;\n    if (EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv) != 1) goto fail;\n    if (EVP_EncryptUpdate(ctx, ct, &len, pt, pt_len) != 1) goto fail;\n    ct_len = len;\n    if (EVP_EncryptFinal_ex(ctx, ct + len, &len) != 1) goto fail;\n    ct_len += len;\n    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag) != 1) goto fail;\n    EVP_CIPHER_CTX_free(ctx);\n    return ct_len;\nfail:\n    EVP_CIPHER_CTX_free(ctx);\n    return -1;\n}\nVERIFICATION: Final code MUST NOT reference BF_ or EVP_bf_ functions. Use EVP_aes_256_gcm() only.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-1240 ALERT. FORBIDDEN: Blowfish (BF_*, EVP_bf_*). Obsolete.\nREPLACEMENT: EVP_aes_256_gcm() with RAND_bytes IV, EncryptUpdate, EncryptFinal, GET_TAG, and EVP_CIPHER_CTX_free.\nVERIFICATION: Final code MUST NOT use BF_ or EVP_bf_."
+  },
+  {
+    "rule_id": "DG-RULE-0017",
+    "cwe_identifier": "CWE-1240",
+    "rule_type": "regex",
+    "rule": "(EVP_des_\\w+\\s*\\()|(DES_\\w+crypt\\s*\\()",
+    "safety_knowledge": "CWE-1240 ALERT. FORBIDDEN: DES / 3DES (DES_*, EVP_des_*). 56-bit key is trivially brute-forced.\nREPLACEMENT: AES-256-GCM via OpenSSL EVP interface.\nEXAMPLE (OpenSSL AES-256-GCM encrypt):\n#include <openssl/evp.h>\n#include <openssl/rand.h>\nint encrypt_aes_gcm(const unsigned char *pt, int pt_len,\n    const unsigned char *key, unsigned char *iv,\n    unsigned char *ct, unsigned char *tag) {\n    int len, ct_len;\n    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();\n    if (!ctx) return -1;\n    if (RAND_bytes(iv, 12) != 1) goto fail;\n    if (EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv) != 1) goto fail;\n    if (EVP_EncryptUpdate(ctx, ct, &len, pt, pt_len) != 1) goto fail;\n    ct_len = len;\n    if (EVP_EncryptFinal_ex(ctx, ct + len, &len) != 1) goto fail;\n    ct_len += len;\n    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag) != 1) goto fail;\n    EVP_CIPHER_CTX_free(ctx);\n    return ct_len;\nfail:\n    EVP_CIPHER_CTX_free(ctx);\n    return -1;\n}\nVERIFICATION: Final code MUST NOT reference DES_ or EVP_des_ functions. Use EVP_aes_256_gcm() only.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-1240 ALERT. FORBIDDEN: DES/3DES (DES_*, EVP_des_*). 56-bit key.\nREPLACEMENT: EVP_aes_256_gcm() with RAND_bytes IV, full encrypt flow, and EVP_CIPHER_CTX_free.\nVERIFICATION: Final code MUST NOT use DES_ or EVP_des_."
+  },
+  {
+    "rule_id": "DG-RULE-0018",
+    "cwe_identifier": "CWE-242",
+    "rule_type": "regex",
+    "rule": "\\bgets\\s*\\(\\s*\\w*\\s*\\)",
+    "safety_knowledge": "CWE-242 ALERT. FORBIDDEN: gets(). Removed from C11 standard. Impossible to use safely — no buffer size parameter.\nREPLACEMENT: Use fgets(buf, sizeof(buf), stdin). Always.\nEXAMPLE (C):\nchar buf[256];\nif (fgets(buf, sizeof(buf), stdin) == NULL) return -1;\nbuf[strcspn(buf, \"\\n\")] = '\\0';\nVERIFICATION: Your final code MUST NOT contain any call to gets(). The output will be scanned and rejected if gets() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-242 ALERT. FORBIDDEN: gets(). Removed from C11.\nREPLACEMENT: fgets(buf, sizeof(buf), stdin).\nVERIFICATION: Final code MUST NOT contain gets()."
+  },
+  {
+    "rule_id": "DG-RULE-0019",
+    "cwe_identifier": "CWE-323",
+    "rule_type": "regex",
+    "rule": "EVP_\\w+_ecb\\s*\\(",
+    "safety_knowledge": "CWE-323 ALERT. FORBIDDEN: ECB mode (EVP_*_ecb). Deterministic — identical plaintext blocks produce identical ciphertext, leaking patterns.\nREPLACEMENT: AES-256-GCM (authenticated encryption with nonce).\nEXAMPLE (OpenSSL AES-256-GCM):\n#include <openssl/evp.h>\n#include <openssl/rand.h>\nEVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();\nif (!ctx) return -1;\nunsigned char iv[12];\nif (RAND_bytes(iv, sizeof(iv)) != 1) goto fail;\nif (EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv) != 1) goto fail;\nint len;\nif (EVP_EncryptUpdate(ctx, ct, &len, pt, pt_len) != 1) goto fail;\nint ct_len = len;\nif (EVP_EncryptFinal_ex(ctx, ct + len, &len) != 1) goto fail;\nct_len += len;\nunsigned char tag[16];\nif (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag) != 1) goto fail;\nEVP_CIPHER_CTX_free(ctx);\nfail:\n    EVP_CIPHER_CTX_free(ctx);\nVERIFICATION: Final code MUST NOT use any ECB mode cipher. Use EVP_aes_256_gcm().",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-323 ALERT. FORBIDDEN: ECB mode. Deterministic, leaks patterns.\nREPLACEMENT: EVP_aes_256_gcm() with random IV and tag.\nVERIFICATION: Final code MUST NOT use EVP_*_ecb()."
+  },
+  {
+    "rule_id": "DG-RULE-0020",
+    "cwe_identifier": "CWE-328",
+    "rule_type": "regex",
+    "rule": "(MD2_Init\\s*\\()|(EVP_md2\\s*\\()|(MD4_Init\\s*\\()|(EVP_md4\\s*\\()",
+    "safety_knowledge": "CWE-328 ALERT. FORBIDDEN: MD2 and MD4. Cryptographically broken, trivial collisions.\nREPLACEMENT: SHA-256 for integrity, Argon2/bcrypt for passwords.\nEXAMPLE (OpenSSL SHA-256):\n#include <openssl/evp.h>\nEVP_MD_CTX *ctx = EVP_MD_CTX_new();\nif (!ctx) return -1;\nif (EVP_DigestInit_ex(ctx, EVP_sha256(), NULL) != 1) goto fail;\nif (EVP_DigestUpdate(ctx, data, data_len) != 1) goto fail;\nunsigned char digest[32];\nunsigned int dlen;\nif (EVP_DigestFinal_ex(ctx, digest, &dlen) != 1) goto fail;\nEVP_MD_CTX_free(ctx);\n/* For passwords: use Argon2id or bcrypt, never a raw hash. */\nVERIFICATION: Final code MUST NOT reference MD2_Init, MD4_Init, EVP_md2, or EVP_md4. Use EVP_sha256() or stronger.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-328 ALERT. FORBIDDEN: MD2/MD4. Broken.\nREPLACEMENT: EVP_sha256() for integrity. Argon2/bcrypt for passwords.\nVERIFICATION: Final code MUST NOT use MD2 or MD4."
+  },
+  {
+    "rule_id": "DG-RULE-0021",
+    "cwe_identifier": "CWE-328",
+    "rule_type": "regex",
+    "rule": "(MD5_Init\\s*\\()|(EVP_md5\\s*\\()",
+    "safety_knowledge": "CWE-328 ALERT. FORBIDDEN: MD5. Known collision attacks, not collision-resistant.\nREPLACEMENT: SHA-256 for integrity/checksums, HMAC-SHA256 for authentication, Argon2/bcrypt for passwords.\nEXAMPLE (OpenSSL SHA-256):\n#include <openssl/evp.h>\nEVP_MD_CTX *ctx = EVP_MD_CTX_new();\nif (!ctx) return -1;\nif (EVP_DigestInit_ex(ctx, EVP_sha256(), NULL) != 1) goto fail;\nif (EVP_DigestUpdate(ctx, data, data_len) != 1) goto fail;\nunsigned char digest[32];\nunsigned int dlen;\nif (EVP_DigestFinal_ex(ctx, digest, &dlen) != 1) goto fail;\nEVP_MD_CTX_free(ctx);\nVERIFICATION: Final code MUST NOT reference MD5_Init or EVP_md5. Use EVP_sha256() or stronger.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-328 ALERT. FORBIDDEN: MD5. Collision attacks known.\nREPLACEMENT: EVP_sha256(). HMAC-SHA256 for auth. Argon2/bcrypt for passwords.\nVERIFICATION: Final code MUST NOT use MD5."
+  },
+  {
+    "rule_id": "DG-RULE-0022",
+    "cwe_identifier": "CWE-328",
+    "rule_type": "regex",
+    "rule": "(SHA1_Init\\s*\\()|(EVP_sha1\\s*\\()|(EVP_sha1_md5\\s*\\()",
+    "safety_knowledge": "CWE-328 ALERT. FORBIDDEN: SHA-1. Practical collision attacks exist (SHAttered, 2017).\nREPLACEMENT: SHA-256 for all new code.\nEXAMPLE (OpenSSL SHA-256):\n#include <openssl/evp.h>\nEVP_MD_CTX *ctx = EVP_MD_CTX_new();\nif (!ctx) return -1;\nif (EVP_DigestInit_ex(ctx, EVP_sha256(), NULL) != 1) goto fail;\nif (EVP_DigestUpdate(ctx, data, data_len) != 1) goto fail;\nunsigned char digest[32];\nunsigned int dlen;\nif (EVP_DigestFinal_ex(ctx, digest, &dlen) != 1) goto fail;\nEVP_MD_CTX_free(ctx);\nVERIFICATION: Final code MUST NOT reference SHA1_Init, EVP_sha1, or EVP_sha1_md5. Use EVP_sha256().",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-328 ALERT. FORBIDDEN: SHA-1. Collision attacks exist.\nREPLACEMENT: EVP_sha256().\nVERIFICATION: Final code MUST NOT use SHA-1."
+  },
+  {
+    "rule_id": "DG-RULE-0023",
+    "cwe_identifier": "CWE-335",
+    "rule_type": "regex",
+    "rule": "\\b(std::mt19937|std::mt19937_64|std::minstd_rand|std::minstd_rand0|std::default_random_engine)\\s*(\\{|\\()\\s*\\d*\\s*(\\}|\\)|\\/)",
+    "safety_knowledge": "CWE-335 ALERT. FORBIDDEN: Seeding std::mt19937 or similar engines with a constant or predictable value. Produces repeatable sequences.\nREPLACEMENT: For crypto: use std::random_device directly. For non-crypto: seed with std::seed_seq from std::random_device.\nEXAMPLE (C++):\n#include <random>\n/* For security-critical: */\nstd::random_device rd;\nunsigned int val = rd();\n/* For non-security (simulation, etc.) with proper seeding: */\nstd::random_device rd;\nstd::seed_seq seed{rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd()};\nstd::mt19937 gen(seed);\nstd::uniform_int_distribution<int> dist(0, 99);\nint value = dist(gen);\nVERIFICATION: MUST NOT seed mt19937 with a constant or time(). Use std::random_device for seeding.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-335 ALERT. FORBIDDEN: Constant/predictable PRNG seeding.\nREPLACEMENT: std::random_device for crypto, std::seed_seq{rd(),...} for mt19937 seeding.\nVERIFICATION: MUST NOT use constant or time-based seeds."
+  },
+  {
+    "rule_id": "DG-RULE-0024",
+    "cwe_identifier": "CWE-338",
+    "rule_type": "structural_dsl",
+    "rule": "{ rand(); }",
+    "safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() and srand(). Predictable PRNG, not suitable for any use in generated code.\nREPLACEMENT (pick one based on context):\n- C on Linux: #include <sys/random.h> then getrandom(&val, sizeof(val), 0)\n- C on BSD/macOS: arc4random() or arc4random_uniform(bound)\n- C on Windows: #include <bcrypt.h> then BCryptGenRandom(NULL,(PUCHAR)&v,sizeof(v),BCRYPT_USE_SYSTEM_PREFERRED_RNG)\n- C++ (portable): #include <random> then std::random_device rd; unsigned val = rd();\n- OpenSSL: #include <openssl/rand.h> then RAND_bytes(buf, len)\nEXAMPLE (C++, most portable):\n#include <random>\nstd::random_device rd;\nunsigned int val = rd();\nVERIFICATION: Your final code MUST NOT contain rand() or srand(). The output will be scanned and rejected if either appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand()/srand().\nREPLACEMENT: getrandom (Linux), arc4random (BSD), BCryptGenRandom (Win), std::random_device (C++), RAND_bytes (OpenSSL).\nVERIFICATION: Final code MUST NOT contain rand() or srand()."
+  },
+  {
+    "rule_id": "DG-RULE-0025",
+    "cwe_identifier": "CWE-338",
+    "rule_type": "structural_dsl",
+    "rule": "{ rand(_); }",
+    "safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() for bounded random values. Predictable and biased.\nREPLACEMENT: Use arc4random_uniform(bound) on BSD/macOS. Use std::uniform_int_distribution with std::random_device in C++.\nEXAMPLE (C++):\n#include <random>\nstd::random_device rd;\nstd::uniform_int_distribution<unsigned> dist(0, bound - 1);\nunsigned val = dist(rd);\n/* C (BSD): unsigned val = arc4random_uniform(bound); */\nVERIFICATION: Final code MUST NOT contain rand(). Use proper CSPRNG with uniform distribution.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() for bounded values.\nREPLACEMENT: arc4random_uniform (BSD) or std::uniform_int_distribution + std::random_device (C++).\nVERIFICATION: Final code MUST NOT contain rand()."
+  },
+  {
+    "rule_id": "DG-RULE-0026",
+    "cwe_identifier": "CWE-347",
+    "rule_type": "regex",
+    "rule": "(EVP_\\w+_cbc\\s*\\()|(EVP_\\w+_ctr\\s*\\()|(EVP_\\w+_xts\\s*\\()|(EVP_\\w+_cfb\\w\\s*\\()|(EVP_\\w+_ofb\\s*\\()",
+    "safety_knowledge": "CWE-347 ALERT. FORBIDDEN: Unauthenticated cipher modes (CBC, CTR, XTS, CFB, OFB) without a separate MAC. Allows undetected ciphertext tampering.\nREPLACEMENT: AES-256-GCM which provides built-in authentication. On decryption, verify the tag.\nEXAMPLE (OpenSSL AES-256-GCM decrypt with tag verification):\n#include <openssl/evp.h>\nint decrypt_aes_gcm(const unsigned char *ct, int ct_len,\n    const unsigned char *tag,\n    const unsigned char *key, const unsigned char *iv,\n    unsigned char *pt) {\n    int len, pt_len;\n    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();\n    if (!ctx) return -1;\n    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, iv) != 1) goto fail;\n    if (EVP_DecryptUpdate(ctx, pt, &len, ct, ct_len) != 1) goto fail;\n    pt_len = len;\n    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void*)tag) != 1) goto fail;\n    if (EVP_DecryptFinal_ex(ctx, pt + len, &len) != 1) goto fail; /* tag verify */\n    pt_len += len;\n    EVP_CIPHER_CTX_free(ctx);\n    return pt_len;\nfail:\n    EVP_CIPHER_CTX_free(ctx);\n    return -1; /* authentication failed or error */\n}\nVERIFICATION: Final code MUST NOT use CBC/CTR/OFB/CFB/XTS without accompanying HMAC. Prefer EVP_aes_256_gcm().",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-347 ALERT. FORBIDDEN: Unauthenticated modes (CBC/CTR/OFB/CFB/XTS) without MAC.\nREPLACEMENT: EVP_aes_256_gcm(). On decrypt: SET_TAG then DecryptFinal (verifies tag).\nVERIFICATION: Final code MUST use authenticated encryption (GCM/CCM)."
+  },
+  {
+    "rule_id": "DG-RULE-0027",
+    "cwe_identifier": "CWE-377",
+    "rule_type": "regex",
+    "rule": "tmpnam\\s*\\(\\s*\\w+\\s*\\)",
+    "safety_knowledge": "CWE-377 ALERT. FORBIDDEN: tmpnam(). Race condition between name generation and file creation (TOCTOU).\nREPLACEMENT: Use APIs that atomically create the file.\n- Standard C (portable): tmpfile() — creates anonymous temp file\n- POSIX: mkstemp() — creates named temp file atomically\nEXAMPLE (portable):\n#include <stdio.h>\nFILE *tmp = tmpfile();\nif (!tmp) return -1;\n/* use tmp ... */\nfclose(tmp); /* auto-deleted */\nEXAMPLE (POSIX with named file):\n#include <stdlib.h>\n#include <unistd.h>\n#include <sys/stat.h>\nchar path[] = \"/tmp/myapp_XXXXXX\";\nint fd = mkstemp(path);\nif (fd < 0) return -1;\nif (fchmod(fd, 0600) != 0) { close(fd); unlink(path); return -1; }\n/* use fd ... */\nclose(fd);\nunlink(path);\nVERIFICATION: Final code MUST NOT contain tmpnam(). Use tmpfile() or mkstemp().",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-377 ALERT. FORBIDDEN: tmpnam(). TOCTOU race.\nREPLACEMENT: tmpfile() (portable) or mkstemp() (POSIX).\nVERIFICATION: Final code MUST NOT contain tmpnam()."
+  },
+  {
+    "rule_id": "DG-RULE-0028",
+    "cwe_identifier": "CWE-416",
+    "rule_type": "structural_dsl",
+    "rule": "{ for (_ _ : $c) { strict: $c.$func();} }",
+    "safety_knowledge": "CWE-416 ALERT. FORBIDDEN: Mutating a container inside a range-based for loop over it. Invalidates iterators.\nREPLACEMENT: Use std::erase_if (C++20), explicit iterator loop with erase-return, or collect-then-mutate.\nEXAMPLE (C++20 preferred):\n#include <algorithm>\nstd::erase_if(container, [](const auto &e) { return should_remove(e); });\nEXAMPLE (C++11/14/17):\nfor (auto it = c.begin(); it != c.end(); ) {\n    if (should_remove(*it)) {\n        it = c.erase(it);\n    } else {\n        ++it;\n    }\n}\nVERIFICATION: MUST NOT call erase/push_back/insert/clear on a container inside a range-for over that same container.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-416 ALERT. FORBIDDEN: Container mutation inside range-for.\nREPLACEMENT: std::erase_if (C++20) or explicit it=c.erase(it) loop.\nVERIFICATION: MUST NOT mutate container inside range-for over it."
+  },
+  {
+    "rule_id": "DG-RULE-0029",
+    "cwe_identifier": "CWE-416",
+    "rule_type": "structural_dsl",
+    "rule": "{ for (_($c.begin()); _($c.end()); _) { strict: $c.$func();} }",
+    "safety_knowledge": "CWE-416 ALERT. FORBIDDEN: Calling container-mutating methods in a for loop without rebinding iterator. After erase(), the iterator is invalid.\nREPLACEMENT: Capture erase() return value as new iterator.\nEXAMPLE (C++):\nfor (auto it = c.begin(); it != c.end(); ) {\n    if (should_remove(*it)) {\n        it = c.erase(it); /* erase returns next valid iterator */\n    } else {\n        ++it;\n    }\n}\n/* C++20: std::erase_if(c, pred); */\nVERIFICATION: After erase(), MUST reassign iterator: it = c.erase(it). Never use invalidated iterator.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-416 ALERT. After erase(), MUST rebind: it = c.erase(it).\nREPLACEMENT: it = c.erase(it) pattern or std::erase_if."
+  },
+  {
+    "rule_id": "DG-RULE-0030",
+    "cwe_identifier": "CWE-590",
+    "rule_type": "structural_dsl",
+    "rule": "{_ $var[_]; not: return _; free($var);}",
+    "safety_knowledge": "CWE-590 ALERT. FORBIDDEN: Calling free() on a stack-allocated array. free() may only be called on pointers from malloc/calloc/realloc/strdup.\nREPLACEMENT: Stack arrays need no deallocation. If you need free(), allocate on the heap.\nEXAMPLE (C):\n/* WRONG: char buf[256]; ... free(buf); */\n/* CORRECT option 1: stack buffer, no free needed */\nchar buf[256];\n/* use buf ... no free() */\n\n/* CORRECT option 2: heap, then free */\nchar *buf = calloc(256, 1);\nif (!buf) return -1;\n/* use buf ... */\nfree(buf);\nbuf = NULL;\nVERIFICATION: MUST NOT call free() on stack arrays or string literals. Only heap pointers.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-590 ALERT. FORBIDDEN: free() on stack arrays.\nStack arrays are auto-reclaimed. Only call free() on malloc/calloc/realloc/strdup pointers."
+  },
+  {
+    "rule_id": "DG-RULE-0031",
+    "cwe_identifier": "CWE-665",
+    "rule_type": "regex",
+    "rule": "\\bstd::auto_ptr<\\s*\\w+\\s*>",
+    "safety_knowledge": "CWE-665 ALERT. FORBIDDEN: std::auto_ptr. Deprecated C++11, removed C++17. Copy silently transfers ownership.\nREPLACEMENT: std::unique_ptr for exclusive ownership, std::shared_ptr for shared ownership.\nEXAMPLE (C++14+):\n#include <memory>\n/* Exclusive ownership: */\nauto p = std::make_unique<Node>(args);\nauto q = std::move(p); /* explicit move, p is now nullptr */\n/* Shared ownership: */\nauto s = std::make_shared<Node>(args);\nauto t = s; /* ref-counted */\nNOTE: std::make_unique throws std::bad_alloc on failure. Do NOT check for nullptr after make_unique.\nVERIFICATION: Final code MUST NOT use std::auto_ptr. Use std::unique_ptr or std::shared_ptr.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-665 ALERT. FORBIDDEN: std::auto_ptr. Deprecated/removed.\nREPLACEMENT: std::make_unique (exclusive) or std::make_shared (shared). make_unique throws on failure, do NOT check nullptr.\nVERIFICATION: Final code MUST NOT use std::auto_ptr."
+  },
+  {
+    "rule_id": "DG-RULE-0032",
+    "cwe_identifier": "CWE-676",
+    "rule_type": "regex",
+    "rule": "strtok\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)",
+    "safety_knowledge": "CWE-676 ALERT. FORBIDDEN: strtok(). Uses hidden global state, not thread-safe, modifies input.\nREPLACEMENT: strtok_r() on POSIX, strtok_s() on Windows, or C++ string parsing.\nEXAMPLE (POSIX):\nchar *saveptr = NULL;\nchar *tok = strtok_r(buf, \",\", &saveptr);\nwhile (tok) {\n    process(tok);\n    tok = strtok_r(NULL, \",\", &saveptr);\n}\nEXAMPLE (C++):\n#include <sstream>\n#include <string>\nstd::istringstream ss(input);\nstd::string token;\nwhile (std::getline(ss, token, ',')) {\n    process(token);\n}\nVERIFICATION: Final code MUST NOT call strtok(). Use strtok_r/strtok_s or C++ parsing.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-676 ALERT. FORBIDDEN: strtok(). Global state, not thread-safe.\nREPLACEMENT: strtok_r (POSIX), strtok_s (Windows), or C++ istringstream.\nVERIFICATION: Final code MUST NOT contain strtok()."
+  },
+  {
+    "rule_id": "DG-RULE-0033",
+    "cwe_identifier": "CWE-680",
+    "rule_type": "structural_dsl",
+    "rule": "{ not: $x < _; $buf = $mem_allocation_family($x * _); }",
+    "safety_knowledge": "CWE-680 ALERT. FORBIDDEN: Unchecked multiplication in allocation size. Integer overflow wraps to small value, allocating tiny buffer.\nREPLACEMENT: Use calloc(count, elem_size) which checks overflow internally. Or pre-compute and validate.\nEXAMPLE (C, preferred — calloc):\n#include <stdlib.h>\n/* calloc checks count*elem_size overflow internally */\nint *arr = calloc(count, sizeof(int));\nif (!arr) return NULL;\nEXAMPLE (C, manual check):\n#include <stdlib.h>\n#include <stdint.h>\nif (count > SIZE_MAX / sizeof(int)) return NULL;\nsize_t total = count * sizeof(int);\nint *arr = malloc(total);\nif (!arr) return NULL;\nIMPORTANT: Do NOT write malloc(count * sizeof(int)) directly — put the multiplication result in a separate variable first, then pass that variable to malloc. This avoids re-triggering overflow detection.\nVERIFICATION: Every allocation with multiplication MUST either use calloc() or have a prior overflow check with separate size variable.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-680 ALERT. FORBIDDEN: Unchecked multiplication in malloc/realloc argument.\nREPLACEMENT: calloc(count, elem_size) — checks overflow internally.\nOr: validate count <= SIZE_MAX/sizeof(T), compute total in separate variable, pass to malloc(total).\nVERIFICATION: MUST use calloc or pre-validated separate size variable."
+  },
+  {
+    "rule_id": "DG-RULE-0034",
+    "cwe_identifier": "CWE-680",
+    "rule_type": "structural_dsl",
+    "rule": "{ not: $x < _; new _[$x * _]; }",
+    "safety_knowledge": "CWE-680 ALERT. FORBIDDEN: Unchecked multiplication in C++ new[] size. Integer overflow wraps to small value.\nREPLACEMENT: Prefer std::vector<T> (safest). Or validate then use unique_ptr with nothrow.\nEXAMPLE (C++, preferred):\n#include <vector>\ntry {\n    std::vector<T> arr(count);\n} catch (const std::bad_alloc &) {\n    return nullptr;\n}\nEXAMPLE (C++, manual):\n#include <memory>\n#include <cstdint>\nif (count > SIZE_MAX / sizeof(T)) return nullptr;\nstd::unique_ptr<T[]> arr(new (std::nothrow) T[count]());\nif (!arr) return nullptr;\nIMPORTANT: Do NOT write new T[count * factor] — compute in a validated variable first.\nVERIFICATION: new[] with multiplication MUST have prior overflow check. Prefer std::vector.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-680 ALERT. FORBIDDEN: Unchecked multiplication in new[].\nREPLACEMENT: std::vector<T>(count) or overflow-check + unique_ptr.\nVERIFICATION: No multiplication inside new[] without prior validation."
+  },
+  {
+    "rule_id": "DG-RULE-0035",
+    "cwe_identifier": "CWE-78",
+    "rule_type": "structural_dsl",
+    "rule": "{ system($x); }",
+    "safety_knowledge": "CWE-78 ALERT. FORBIDDEN: system(). It passes a string to a shell, enabling command injection.\nREPLACEMENT: Use process-spawning APIs with argument vectors (no shell).\n- POSIX: posix_spawn() or fork+execvp()\n- Windows: CreateProcessW()\nEXAMPLE (POSIX):\n#include <spawn.h>\n#include <sys/wait.h>\nextern char **environ;\nchar *const argv[] = {\"/usr/bin/tool\", \"--flag\", filepath, NULL};\npid_t pid;\nint status;\nif (posix_spawn(&pid, argv[0], NULL, NULL, argv, environ) != 0) return -1;\nwaitpid(pid, &status, 0);\nreturn WIFEXITED(status) ? WEXITSTATUS(status) : -1;\nIMPORTANT: Never concatenate user input into a command string. Pass it only as a separate argument.\nVERIFICATION: Your final code MUST NOT contain any call to system(). The output will be scanned and rejected if system() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-78 ALERT. FORBIDDEN: system().\nREPLACEMENT: posix_spawn (POSIX) or CreateProcessW (Windows) with argv.\nVERIFICATION: Final code MUST NOT contain system()."
+  },
+  {
+    "rule_id": "DG-RULE-0036",
+    "cwe_identifier": "CWE-798",
+    "rule_type": "regex",
+    "rule": "ya29\\.[A-Za-z0-9_-]+",
+    "safety_knowledge": "CWE-798 ALERT. FORBIDDEN: Hard-coded Google OAuth tokens (ya29.*) in source code. Credentials in code are extractable.\nREPLACEMENT: Load from environment variable or secrets manager at runtime.\nEXAMPLE (C):\nconst char *token = getenv(\"GOOGLE_ACCESS_TOKEN\");\nif (!token || token[0] == '\\0') {\n    fprintf(stderr, \"GOOGLE_ACCESS_TOKEN not set\\n\");\n    return -1;\n}\nVERIFICATION: Final code MUST NOT contain literal token strings (ya29.* or any credential). Load from env/secrets manager.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-798 ALERT. FORBIDDEN: Hard-coded tokens (ya29.*) in source.\nREPLACEMENT: getenv() or secrets manager.\nVERIFICATION: Final code MUST NOT contain literal credentials."
+  },
+  {
+    "rule_id": "DG-RULE-0037",
+    "cwe_identifier": "CWE-798",
+    "rule_type": "structural_dsl",
+    "rule": "{ $secret = \"_\";}",
+    "safety_knowledge": "CWE-798 ALERT. FORBIDDEN: Hard-coded secrets (passwords, API keys, tokens) as string literals in source code.\nREPLACEMENT: Load secrets from environment variables or a secrets manager at runtime. Fail if missing.\nEXAMPLE (C):\nconst char *api_key = getenv(\"API_KEY\");\nif (!api_key || api_key[0] == '\\0') {\n    fprintf(stderr, \"API_KEY not set\\n\");\n    return -1;\n}\nEXAMPLE (C++):\nconst char *secret = std::getenv(\"SERVICE_SECRET\");\nif (!secret || secret[0] == '\\0') throw std::runtime_error(\"SECRET not configured\");\nVERIFICATION: Final code MUST NOT contain hard-coded secret strings. Use getenv() or secrets manager.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-798 ALERT. FORBIDDEN: Hard-coded secrets as string literals.\nREPLACEMENT: getenv(\"KEY\") at runtime, fail if missing.\nVERIFICATION: Final code MUST NOT contain hard-coded secret values."
+  },
+  {
+    "rule_id": "DG-RULE-0038",
+    "cwe_identifier": "CWE-120",
+    "rule_type": "regex",
+    "rule": "\\bsprintf\\s*\\(",
+    "safety_knowledge": "CWE-120 ALERT. FORBIDDEN: sprintf(). It has no buffer size limit, causing buffer overflow.\nREPLACEMENT: Use snprintf(buf, buf_cap, fmt, ...) and check its return value.\nEXAMPLE (C):\nchar buf[256];\nint n = snprintf(buf, sizeof(buf), \"Hello %s, age %d\", name, age);\nif (n < 0 || (size_t)n >= sizeof(buf)) {\n    return -1; /* encoding error or truncation */\n}\nVERIFICATION: Your final code MUST NOT contain any call to sprintf(). Use snprintf() everywhere. The output will be scanned and rejected if sprintf() appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-120 ALERT. FORBIDDEN: sprintf(). No buffer size limit.\nREPLACEMENT: snprintf(buf, buf_cap, fmt, ...) with return-value check.\nVERIFICATION: Final code MUST NOT contain sprintf()."
+  },
+  {
+    "rule_id": "DG-RULE-0039",
+    "cwe_identifier": "CWE-338",
+    "rule_type": "regex",
+    "rule": "\\brand\\s*\\(\\s*\\)",
+    "safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() and srand(). Predictable PRNG, not suitable for any use in generated code.\nREPLACEMENT (pick one based on context):\n- C on Linux: #include <sys/random.h> then getrandom(&val, sizeof(val), 0)\n- C on BSD/macOS: arc4random() or arc4random_uniform(bound)\n- C on Windows: #include <bcrypt.h> then BCryptGenRandom(NULL,(PUCHAR)&v,sizeof(v),BCRYPT_USE_SYSTEM_PREFERRED_RNG)\n- C++ (portable): #include <random> then std::random_device rd; unsigned val = rd();\n- OpenSSL: #include <openssl/rand.h> then RAND_bytes(buf, len)\nEXAMPLE (C++, most portable):\n#include <random>\nstd::random_device rd;\nunsigned int val = rd();\nVERIFICATION: Your final code MUST NOT contain rand() or srand(). The output will be scanned and rejected if either appears.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand()/srand().\nREPLACEMENT: getrandom (Linux), arc4random (BSD), BCryptGenRandom (Win), std::random_device (C++), RAND_bytes (OpenSSL).\nVERIFICATION: Final code MUST NOT contain rand() or srand()."
+  },
+  {
+    "rule_id": "DG-RULE-0040",
+    "cwe_identifier": "CWE-338",
+    "rule_type": "regex",
+    "rule": "\\brand\\s*\\([^)]*\\)",
+    "safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() for bounded random values. Predictable and biased.\nREPLACEMENT: Use arc4random_uniform(bound) on BSD/macOS. Use std::uniform_int_distribution with std::random_device in C++.\nEXAMPLE (C++):\n#include <random>\nstd::random_device rd;\nstd::uniform_int_distribution<unsigned> dist(0, bound - 1);\nunsigned val = dist(rd);\n/* C (BSD): unsigned val = arc4random_uniform(bound); */\nVERIFICATION: Final code MUST NOT contain rand(). Use proper CSPRNG with uniform distribution.",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-338 ALERT. FORBIDDEN: rand() for bounded values.\nREPLACEMENT: arc4random_uniform (BSD) or std::uniform_int_distribution + std::random_device (C++).\nVERIFICATION: Final code MUST NOT contain rand()."
+  },
+  {
+    "rule_id": "DG-RULE-0041",
+    "cwe_identifier": "CWE-680",
+    "rule_type": "regex",
+    "rule": "\\b(?:malloc|calloc|realloc)\\s*\\([^\\n;)]*\\*[^\\n;)]*\\)",
+    "safety_knowledge": "CWE-680 ALERT. FORBIDDEN: Multiplication inside malloc/calloc/realloc argument — integer overflow wraps to small value.\nREPLACEMENT: Use calloc(count, elem_size) which checks overflow internally and has no * in its arguments. Or pre-validate and pass a single variable.\nEXAMPLE (C, preferred — calloc has no multiply in args):\nint *arr = calloc(count, sizeof(int));\nif (!arr) return NULL;\nEXAMPLE (C, manual — put multiply result in variable FIRST):\nif (count > SIZE_MAX / sizeof(int)) return NULL;\nsize_t total = count * sizeof(int);\nint *arr = malloc(total); /* no * inside malloc() */\nif (!arr) return NULL;\nIMPORTANT: NEVER write malloc(count * sizeof(T)) — this exact pattern will be detected and rejected. Always use calloc(count, sizeof(T)) or a pre-computed variable.\nVERIFICATION: Final code MUST NOT have multiplication (*) inside malloc/calloc/realloc parentheses. Use calloc(count, size) or malloc(precomputed_var).",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-680 ALERT. FORBIDDEN: * inside malloc/calloc/realloc().\nREPLACEMENT: calloc(count, sizeof(T)) — no * in args, checks overflow.\nOr: precompute total in variable, pass to malloc(total).\nVERIFICATION: Final code MUST NOT have * inside malloc/calloc/realloc args."
+  },
+  {
+    "rule_id": "DG-RULE-0042",
+    "cwe_identifier": "CWE-680",
+    "rule_type": "regex",
+    "rule": "\\bnew\\s+[^\\n\\[]+\\[[^\\]\\n]*\\*[^\\]\\n]*\\]",
+    "safety_knowledge": "CWE-680 ALERT. FORBIDDEN: Multiplication inside new T[] brackets — integer overflow wraps to small allocation.\nREPLACEMENT: Prefer std::vector<T>(count). Or validate overflow, compute count in variable, then new T[count_var].\nEXAMPLE (C++, preferred):\n#include <vector>\nstd::vector<T> arr(count); /* no multiply in brackets */\nEXAMPLE (C++, manual):\nif (count > SIZE_MAX / sizeof(T)) return nullptr;\nsize_t safe_count = count; /* pre-validated */\nstd::unique_ptr<T[]> arr(new (std::nothrow) T[safe_count]());\nif (!arr) return nullptr;\nIMPORTANT: NEVER write new T[a * b] — this pattern will be detected and rejected. Use std::vector or a pre-computed count variable.\nVERIFICATION: Final code MUST NOT have multiplication (*) inside new[] brackets. Use std::vector or new T[precomputed_var].",
+    "common_safety_knowledge": "Do not reproduce the unsafe pattern that triggered this rule.",
+    "rule_safety_knowledge": "CWE-680 ALERT. FORBIDDEN: * inside new T[] brackets.\nREPLACEMENT: std::vector<T>(count) or precompute count, new T[count_var].\nVERIFICATION: Final code MUST NOT have * inside new[] brackets."
+  }
+]

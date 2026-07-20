@@ -1,6 +1,6 @@
 # TraceGuard Artifact
 
-This repository contains the artifact for evaluating TraceGuard, a reasoning-stage safety enhancement tool for code generation models. The artifact is organized for anonymous review and includes scripts for model download, local API deployment, code-generation security evaluation, and functionality evaluation.
+This repository contains the artifact for evaluating TraceGuard, a reasoning-stage security enhancement approach for LRM code generation. The artifact is organized for anonymous review and includes scripts for model download, local API deployment, code-generation security evaluation, and functionality evaluation.
 
 ## Repository Layout
 
